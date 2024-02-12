@@ -1,0 +1,56 @@
+image: docker:19.03
+
+stages:
+  - build
+  - test
+  - security
+  - deploy_local
+
+variables:
+  APP_NAME: "Automatyzacja App"
+  TEST_IMAGE: "$CI_REGISTRY_IMAGE/test-image"
+  SECRET_KEY: "supersecretkey"
+
+services:
+  - docker:dind
+
+before_script:
+  - apk add --update python3 py3-pip python3-dev build-base libffi-dev
+  - pip install virtualenv --ignore-installed distlib
+  - virtualenv venv
+  - source venv/bin/activate
+  - pip install --upgrade pip
+  - pip install Flask SQLAlchemy python-dotenv
+  - pip install requests
+
+
+
+build:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME -f Dockerfile .  
+    - echo "$CI_REGISTRY_PASSWORD" | docker login -u "$CI_REGISTRY_USER" --password-stdin $CI_REGISTRY
+    - docker push $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+
+unit_tests:
+  stage: test
+  script:
+    - echo "Run unit tests..."
+    - python -m unittest discover
+
+security_scans:
+  stage: security
+  script:
+    - python tests/dependency_test.py
+    - python tests/static_test.py
+    - python dast_test.py
+
+deploy_local:
+  stage: deploy_local
+  script:
+    - docker run -p 5000:5000 $CI_REGISTRY_IMAGE:$CI_COMMIT_REF_NAME
+  environment:
+    name: local
+    url: http://localhost:5000 
+  only:
+    - master

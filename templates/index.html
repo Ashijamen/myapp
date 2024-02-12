@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact List</title>
+</head>
+<body>
+    <h1>Contact List</h1>
+    <ul>
+        {% for contact in contacts %}
+            <li>{{ contact.name }} - {{ contact.phone }} <a href="/delete_contact/{{ contact.name }}">Delete</a> <a href="/edit_contact/{{ contact.name }}">Edit</a></li>
+        {% endfor %}
+    </ul>
+    <h2>Add New Contact</h2>
+    <form action="/add_contact" method="post">
+        <label for="name">Name:</label><br>
+        <input type="text" id="name" name="name"><br>
+        <label for="phone">Phone:</label><br>
+        <input type="text" id="phone" name="phone"><br><br>
+        <input type="submit" value="Submit">
+    </form>
+</body>
+</html>
